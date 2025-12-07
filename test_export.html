@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<!--
+============================================
+EXCEL EXPORT TEST & DEMO PAGE
+============================================
+
+Purpose:
+- Test Excel export functionality before production
+- Generate sample data for demonstrations
+- Verify data format and structure
+
+Features:
+- Add test data with 3 different entry types
+- Export to Excel and verify output
+- View stored data in browser
+- Clear all test data
+
+Usage:
+1. Click "إضافة بيانات تجريبية" to add sample data
+2. Click "تصدير إلى Excel" to test export
+3. Open Excel file to verify formatting
+4. Use "مسح جميع البيانات" to reset
+
+@author Lebanon War Damage Assessment Team
+============================================
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="صفحة اختبار وظيفة التصدير إلى Excel">
+    <title>اختبار التصدير - نموذج حصر الأضرار</title>
+    
+    <!-- SheetJS Library for Excel Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-right: 4px solid #2196f3;
+        }
+        .success {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            color: #155724;
+            display: none;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            direction: ltr;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار وظيفة التصدير إلى Excel</h1>
+        
+        <div class="info">
+            <h3>📋 الخطوات:</h3>
+            <ol>
+                <li>أولاً: أدخل بيانات تجريبية للاختبار</li>
+                <li>ثانياً: صدّر البيانات إلى ملف Excel</li>
+                <li>ثالثاً: افتح الملف وتحقق من النتائج</li>
+            </ol>
+        </div>
+
+        <button onclick="addTestData()">1️⃣ إضافة بيانات تجريبية</button>
+        <button onclick="exportToExcel()">2️⃣ تصدير إلى Excel</button>
+        <button onclick="viewStoredData()">👁️ عرض البيانات المخزنة</button>
+        <button onclick="clearAllData()" style="background: #dc3545;">🗑️ حذف جميع البيانات</button>
+        
+        <div class="success" id="message"></div>
+        <div id="dataDisplay"></div>
+    </div>
+
+    <script>
+        function addTestData() {
+            // Clear existing test data
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('submission_')) {
+                    localStorage.removeItem(key);
+                }
+            }
+
+            // Test Data 1: Single Entry
+            const data1 = {
+                timestamp: new Date().toLocaleString('ar-LB'),
+                sector: 'قطاع صور',
+                village: 'صور',
+                neighborhood: 'حي المدينة',
+                buildingName: 'برج السلام',
+                streetName: 'شارع الحمراء',
+                propertyNumber: '103',
+                sectionNumber: '5',
+                isInBuilding: true,
+                blockNumber: '12',
+                buildingCount: '8',
+                buildingType: 'سكني',
+                floors: '4',
+                floorNumber: '2',
+                sectionType: 'منزل',
+                direction: 'شمال',
+                fullName: 'أحمد محمد علي',
+                motherName: 'فاطمة حسين',
+                registry: 'صور/1985',
+                phone: '03123456'
+            };
+
+            // Test Data 2: My Floors Entry
+            const data2 = {
+                timestamp: new Date().toLocaleString('ar-LB'),
+                sector: 'قطاع بنت جبيل',
+                village: 'بنت جبيل',
+                neighborhood: 'حي الجنوب',
+                buildingName: 'بناية النور',
+                streetName: 'شارع المدرسة',
+                propertyNumber: '207',
+                sectionNumber: '3',
+                isInBuilding: false,
+                buildingType: 'سكني',
+                floors: '5',
+                floorNumber: '1',
+                sectionType: 'منزل',
+                direction: 'شرق',
+                fullName: 'محمد حسن كريم',
+                motherName: 'زينب أحمد',
+                registry: 'بنت جبيل/1990',
+                phone: '03234567',
+                myFloors: [
+                    {
+                        floorNumber: '3',
+                        sectionType: 'محل',
+                        direction: 'غرب',
+                        registrantName: 'علي محمد'
+                    },
+                    {
+                        floorNumber: '4',
+                        sectionType: 'مكتب',
+                        direction: 'جنوب',
+                        registrantName: 'حسن علي'
+                    }
+                ]
+            };
+
+            // Test Data 3: Full Building Entry
+            const data3 = {
+                timestamp: new Date().toLocaleString('ar-LB'),
+                sector: 'قطاع الحوش',
+                village: 'الحوش',
+                neighborhood: 'حي البستان',
+                buildingName: 'عمارة الرحمة',
+                streetName: 'الشارع الرئيسي',
+                propertyNumber: '456',
+                sectionNumber: '8',
+                isInBuilding: true,
+                blockNumber: '5',
+                buildingCount: '12',
+                buildingType: 'سكني تجاري',
+                floors: '6',
+                fullName: 'خالد يوسف',
+                motherName: 'ليلى حسن',
+                registry: 'الحوش/1988',
+                phone: '03345678',
+                residents: [
+                    {
+                        fullName: 'عمر خالد',
+                        motherName: 'رنا محمد',
+                        registry: 'الحوش/2010',
+                        phone: '03456789',
+                        floor: '2',
+                        sectionType: 'منزل',
+                        direction: 'شمال'
+                    },
+                    {
+                        fullName: 'سارة أحمد',
+                        motherName: 'نور علي',
+                        registry: 'الحوش/2012',
+                        phone: '03567890',
+                        floor: '3',
+                        sectionType: 'عيادة',
+                        direction: 'جنوب'
+                    },
+                    {
+                        fullName: 'كريم حسن',
+                        motherName: 'هدى محمود',
+                        registry: 'الحوش/2008',
+                        phone: '03678901',
+                        floor: '5',
+                        sectionType: 'مستودع',
+                        direction: 'شرق'
+                    }
+                ]
+            };
+
+            // Save to localStorage
+            localStorage.setItem('submission_' + Date.now() + '_1', JSON.stringify(data1));
+            localStorage.setItem('submission_' + Date.now() + '_2', JSON.stringify(data2));
+            localStorage.setItem('submission_' + Date.now() + '_3', JSON.stringify(data3));
+
+            const message = document.getElementById('message');
+            message.style.display = 'block';
+            message.innerHTML = '✅ تم إضافة 3 سجلات تجريبية بنجاح!<br>- سجل واحد (إدخال عادي)<br>- سجل بطوابق متعددة (2 طوابق إضافية)<br>- سجل مبنى كامل (3 سكان)';
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+
+        function exportToExcel() {
+            try {
+                const submissions = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('submission_')) {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        submissions.push(data);
+                    }
+                }
+
+                if (submissions.length === 0) {
+                    alert('لا توجد بيانات للتصدير. الرجاء إضافة بيانات تجريبية أولاً.');
+                    return;
+                }
+
+                const excelData = [];
+                
+                submissions.forEach((submission, index) => {
+                    const baseInfo = {
+                        'رقم السجل': index + 1,
+                        'تاريخ التسجيل': submission.timestamp || '',
+                        'القطاع': submission.sector || '',
+                        'القرية': submission.village || '',
+                        'الحي': submission.neighborhood || '',
+                        'اسم المبنى': submission.buildingName || '',
+                        'اسم الشارع': submission.streetName || '',
+                        'رقم العقار': submission.propertyNumber || '',
+                        'رقم القسم': submission.sectionNumber || '',
+                        'ضمن مبنى': submission.isInBuilding ? 'نعم' : 'لا',
+                        'رقم الكتلة/المبنى': submission.blockNumber || '',
+                        'عدد المباني': submission.buildingCount || '',
+                        'نوع المبنى': submission.buildingType || '',
+                        'عدد الطوابق': submission.floors || '',
+                        'رقم الطابق': submission.floorNumber || '',
+                        'نوع القسم': submission.sectionType || '',
+                        'الاتجاه': submission.direction || '',
+                        'الاسم الكامل': submission.fullName || '',
+                        'اسم الأم': submission.motherName || '',
+                        'القيد': submission.registry || '',
+                        'رقم الهاتف': submission.phone || ''
+                    };
+
+                    if (submission.myFloors && submission.myFloors.length > 0) {
+                        baseInfo['نوع الإدخال'] = 'طوابق مسجلة باسمي';
+                        baseInfo['عدد الطوابق المسجلة'] = submission.myFloors.length;
+                        
+                        submission.myFloors.forEach((floor, floorIndex) => {
+                            const floorData = { ...baseInfo };
+                            floorData['رقم السجل'] = `${index + 1}.${floorIndex + 1}`;
+                            floorData['رقم الطابق الإضافي'] = floor.floorNumber || '';
+                            floorData['نوع القسم الإضافي'] = floor.sectionType || '';
+                            floorData['الاتجاه الإضافي'] = floor.direction || '';
+                            floorData['اسم المسجل'] = floor.registrantName || '';
+                            excelData.push(floorData);
+                        });
+                    } else if (submission.residents && submission.residents.length > 0) {
+                        baseInfo['نوع الإدخال'] = 'مبنى كامل';
+                        baseInfo['عدد السكان'] = submission.residents.length;
+                        
+                        submission.residents.forEach((resident, residentIndex) => {
+                            const residentData = { ...baseInfo };
+                            residentData['رقم السجل'] = `${index + 1}.${residentIndex + 1}`;
+                            residentData['اسم الساكن'] = resident.fullName || '';
+                            residentData['اسم أم الساكن'] = resident.motherName || '';
+                            residentData['قيد الساكن'] = resident.registry || '';
+                            residentData['هاتف الساكن'] = resident.phone || '';
+                            residentData['طابق الساكن'] = resident.floor || '';
+                            residentData['نوع قسم الساكن'] = resident.sectionType || '';
+                            residentData['اتجاه الساكن'] = resident.direction || '';
+                            excelData.push(residentData);
+                        });
+                    } else {
+                        baseInfo['نوع الإدخال'] = 'إدخال واحد';
+                        excelData.push(baseInfo);
+                    }
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(excelData);
+
+                ws['!cols'] = Array(25).fill({ wch: 15 });
+
+                XLSX.utils.book_append_sheet(wb, ws, 'حصر الأضرار');
+
+                const now = new Date();
+                const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+                const filename = `حصر_الأضرار_${dateStr}.xlsx`;
+
+                XLSX.writeFile(wb, filename);
+
+                const message = document.getElementById('message');
+                message.style.display = 'block';
+                message.innerHTML = `✅ تم تصدير ${submissions.length} سجل بنجاح!<br>📁 اسم الملف: ${filename}<br>📍 تحقق من مجلد التنزيلات`;
+                
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 8000);
+
+            } catch (error) {
+                alert('حدث خطأ: ' + error.message);
+            }
+        }
+
+        function viewStoredData() {
+            const submissions = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('submission_')) {
+                    submissions.push(localStorage.getItem(key));
+                }
+            }
+
+            const display = document.getElementById('dataDisplay');
+            if (submissions.length === 0) {
+                display.innerHTML = '<div class="info"><strong>⚠️ لا توجد بيانات مخزنة</strong></div>';
+            } else {
+                display.innerHTML = `<div class="info"><strong>📊 عدد السجلات المخزنة: ${submissions.length}</strong><pre>${JSON.stringify(JSON.parse(submissions[0]), null, 2)}</pre></div>`;
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('هل أنت متأكد من حذف جميع البيانات؟')) {
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('submission_')) {
+                        localStorage.removeItem(key);
+                    }
+                }
+                const message = document.getElementById('message');
+                message.style.display = 'block';
+                message.innerHTML = '🗑️ تم حذف جميع البيانات';
+                document.getElementById('dataDisplay').innerHTML = '';
+                
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

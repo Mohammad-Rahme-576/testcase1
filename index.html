@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="نموذج رقمي لحصر أضرار الحرب على لبنان - تسجيل بيانات المباني والمنازل المتضررة">
+    <meta name="keywords" content="لبنان, حصر أضرار, الحرب, تسجيل, مباني, منازل">
+    <meta name="author" content="Lebanon War Damage Assessment Team">
+    <title>نموذج حصر أضرار الحرب - لبنان</title>
+    
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- SheetJS Library - For Excel Export Functionality -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header>
+            <h1>نموذج تقييم أضرار المنازل</h1>
+            <p class="subtitle">الحرب على لبنان - تسجيل الأضرار</p>
+        </header>
+
+        <!-- Progress Indicator -->
+        <!-- Displays current step number and visual progress bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">الخطوة 1 من 4</p>
+        </div>
+
+        <!-- Main Form Container -->
+        <!-- novalidate attribute allows custom JavaScript validation -->
+        <form id="damageForm" novalidate>
+            
+            <!--===========================================
+                STEP 1: LOCATION INFORMATION
+                Collects geographical data about the damaged property
+                Fields: Sector, Village, Neighborhood, Building Name, Street
+            ============================================-->
+            <div class="form-step active" id="step1">
+                <h2>معلومات الموقع</h2>
+                
+                <div class="form-group">
+                    <label for="sector">القطاع <span class="required">*</span></label>
+                    <select id="sector" name="sector" required>
+                        <option value="">اختر القطاع...</option>
+                    </select>
+                    <span class="error-message" id="sectorError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="village">المنطقة العقارية <span class="required">*</span></label>
+                    <select id="village" name="village" required disabled>
+                        <option value="">اختر المنطقة العقارية...</option>
+                    </select>
+                    <span class="error-message" id="villageError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="neighborhood">الحي <span class="required">*</span></label>
+                    <input type="text" id="neighborhood" name="neighborhood" placeholder="مثال: الحارة الفوقا" required>
+                    <span class="error-message" id="neighborhoodError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="buildingName">اسم المبنى المتعارف عليه <span class="required">*</span></label>
+                    <input type="text" id="buildingName" name="buildingName" placeholder="مثال: بناية الخطيب" required>
+                    <span class="error-message" id="buildingNameError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="street">الشارع <span class="required">*</span></label>
+                    <input type="text" id="street" name="street" placeholder="مثال: شارع الرئيسي" required>
+                    <span class="error-message" id="streetError"></span>
+                </div>
+
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-next" onclick="nextStep(1)">التالي</button>
+                </div>
+            </div>
+
+            <!--===========================================
+                STEP 2: BUILDING INFORMATION
+                Collects detailed property and building data
+                Includes conditional fields based on building type
+            ============================================-->
+            <div class="form-step" id="step2">
+                <h2>معلومات المبنى</h2>
+                
+                <!-- Property Number - Dynamically populated based on village selection -->
+                <div class="form-group">
+                    <label for="propertyNumber">رقم العقار <span class="required">*</span></label>
+                    <select id="propertyNumber" name="propertyNumber" required disabled>
+                        <option value="">اختر رقم العقار...</option>
+                    </select>
+                    <span class="error-message" id="propertyNumberError"></span>
+                </div>
+
+                <!-- Section Number within the property -->
+                <div class="form-group">
+                    <label for="sectionNumber">رقم القسم في العقار <span class="required">*</span></label>
+                    <input type="number" id="sectionNumber" name="sectionNumber" placeholder="مثال: 5" required>
+                    <span class="error-message" id="sectionNumberError"></span>
+                </div>
+
+                <!-- Toggle Switch - Shows/Hides building-specific fields -->
+                <div class="form-group">
+                    <div class="toggle-container">
+                        <label class="toggle-label">القسم ضمن مبنى؟</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="isInBuildingToggle" name="isInBuilding">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Conditional Fields - Only shown when toggle is ON -->
+                <div id="buildingFields" style="display: block;">
+                    <div class="form-group">
+                        <label for="block">البلوك <span class="required">*</span></label>
+                        <input type="text" id="block" name="block" placeholder="مثال: A او 1" required>
+                        <span class="error-message" id="blockError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="buildingCount">عدد المباني / البلوكات في العقار <span class="required">*</span></label>
+                        <input type="number" id="buildingCount" name="buildingCount" min="1" max="50" placeholder="مثال: 3" required>
+                        <span class="error-message" id="buildingCountError"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="buildingType">نوع المبنى <span class="required">*</span></label>
+                    <select id="buildingType" name="buildingType" required>
+                        <option value="">اختر النوع...</option>
+                        <option value="family">عائلي</option>
+                        <option value="public">عام</option>
+                    </select>
+                    <span class="error-message" id="buildingTypeError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="totalFloors">عدد طوابق المبنى <span class="required">*</span></label>
+                    <input type="number" id="totalFloors" name="totalFloors" min="1" max="50" placeholder="مثال: 3" required>
+                    <span class="error-message" id="totalFloorsError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="floorNumber">الطابق <span class="required">*</span></label>
+                    <input type="number" id="floorNumber" name="floorNumber" min="0" max="50" placeholder="مثال: 2" required>
+                    <span class="error-message" id="floorNumberError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="sectionType">نوع القسم <span class="required">*</span></label>
+                    <select id="sectionType" name="sectionType" required>
+                        <option value="">اختر نوع القسم...</option>
+                        <option value="house">منزل</option>
+                        <option value="shop">محل</option>
+                        <option value="warehouse">مستودع</option>
+                        <option value="office">مكتب</option>
+                        <option value="clinic">عيادة</option>
+                        <option value="factory">معمل</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                    <span class="error-message" id="sectionTypeError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="direction">الجهة <span class="required">*</span></label>
+                    <select id="direction" name="direction" required>
+                        <option value="">اختر الجهة...</option>
+                        <option value="north">شمالي</option>
+                        <option value="south">جنوبي</option>
+                        <option value="east">شرقي</option>
+                        <option value="west">غربي</option>
+                        <option value="northeast">شمال شرقي</option>
+                        <option value="northwest">شمال غربي</option>
+                        <option value="southeast">جنوب شرقي</option>
+                        <option value="southwest">جنوب غربي</option>
+                    </select>
+                    <span class="error-message" id="directionError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="entry-type-label">نوع الإدخال <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="entryType" value="myFloors" checked>
+                            <span>إدخال معلومات الطوابق المسجلة باسمي</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="entryType" value="full">
+                            <span>إدخال معلومات المبنى كاملاً (جميع القاطنين)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-prev" onclick="prevStep(2)">السابق</button>
+                    <button type="button" class="btn btn-next" onclick="nextStep(2)">التالي</button>
+                </div>
+            </div>
+
+            <!-- Step 2A: My Floors Entry (Multiple Floors under same name) -->
+            <div class="form-step" id="step2a">
+                <h2>الطوابق المسجلة باسمي</h2>
+                <p class="step-description">أضف معلومات الطوابق الإضافية المسجلة باسمك</p>
+                
+                <div id="myFloorsContainer">
+                    <!-- First floor entry (template) -->
+                    <div class="floor-entry" data-index="0">
+                        <div class="floor-header">
+                            <h3>طابق رقم 1</h3>
+                            <button type="button" class="btn-remove-floor" onclick="removeFloor(0)" style="display: none;">
+                                <span>×</span>
+                            </button>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>رقم الطابق <span class="required">*</span></label>
+                                <input type="number" name="myfloor_number_0" min="0" max="50" placeholder="مثال: 3" required>
+                            </div>
+                            <div class="form-group">
+                                <label>نوع القسم <span class="required">*</span></label>
+                                <select name="myfloor_sectionType_0" required>
+                                    <option value="">اختر النوع...</option>
+                                    <option value="house">منزل</option>
+                                    <option value="shop">محل</option>
+                                    <option value="warehouse">مستودع</option>
+                                    <option value="office">مكتب</option>
+                                    <option value="clinic">عيادة</option>
+                                    <option value="factory">معمل</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الجهة <span class="required">*</span></label>
+                                <select name="myfloor_direction_0" required>
+                                    <option value="">اختر الجهة...</option>
+                                    <option value="north">شمالي</option>
+                                    <option value="south">جنوبي</option>
+                                    <option value="east">شرقي</option>
+                                    <option value="west">غربي</option>
+                                    <option value="northeast">شمال شرقي</option>
+                                    <option value="northwest">شمال غربي</option>
+                                    <option value="southeast">جنوب شرقي</option>
+                                    <option value="southwest">جنوب غربي</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>اسم الشخص المسجل باسمه <span class="required">*</span></label>
+                            <input type="text" name="myfloor_registrant_0" placeholder="الاسم الكامل" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-add-floor" onclick="addMyFloor()">
+                    <span>+</span> إضافة طابق آخر
+                </button>
+
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-prev" onclick="prevStep('2a')">السابق</button>
+                    <button type="button" class="btn btn-next" onclick="nextStep('2a')">التالي</button>
+                </div>
+            </div>
+
+            <!-- Step 2B: Full Building Entry (Multiple Residents) -->
+            <div class="form-step" id="step2b">
+                <h2>إدخال معلومات المبنى كاملاً</h2>
+                <p class="step-description">أضف معلومات جميع القاطنين في المبنى</p>
+                
+                <div id="residentsContainer">
+                    <!-- First resident entry (template) -->
+                    <div class="resident-entry" data-index="0">
+                        <div class="resident-header">
+                            <h3>قاطن رقم 1</h3>
+                            <button type="button" class="btn-remove-resident" onclick="removeResident(0)" style="display: none;">
+                                <span>×</span>
+                            </button>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الاسم الثلاثي <span class="required">*</span></label>
+                                <input type="text" name="resident_fullName_0" placeholder="الاسم الكامل" required>
+                            </div>
+                            <div class="form-group">
+                                <label>اسم الأم <span class="required">*</span></label>
+                                <input type="text" name="resident_motherName_0" placeholder="اسم الأم" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>رقم السجل <span class="required">*</span></label>
+                                <input type="text" name="resident_registry_0" placeholder="رقم السجل" required>
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الهاتف <span class="required">*</span></label>
+                                <input type="tel" name="resident_phone_0" placeholder="03123456" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الطابق <span class="required">*</span></label>
+                                <input type="number" name="resident_floor_0" min="0" max="50" placeholder="مثال: 2" required>
+                            </div>
+                            <div class="form-group">
+                                <label>نوع القسم <span class="required">*</span></label>
+                                <select name="resident_sectionType_0" required>
+                                    <option value="">اختر النوع...</option>
+                                    <option value="house">منزل</option>
+                                    <option value="shop">محل</option>
+                                    <option value="warehouse">مستودع</option>
+                                    <option value="office">مكتب</option>
+                                    <option value="clinic">عيادة</option>
+                                    <option value="factory">معمل</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الجهة <span class="required">*</span></label>
+                                <select name="resident_direction_0" required>
+                                    <option value="">اختر الجهة...</option>
+                                    <option value="north">شمالي</option>
+                                    <option value="south">جنوبي</option>
+                                    <option value="east">شرقي</option>
+                                    <option value="west">غربي</option>
+                                    <option value="northeast">شمال شرقي</option>
+                                    <option value="northwest">شمال غربي</option>
+                                    <option value="southeast">جنوب شرقي</option>
+                                    <option value="southwest">جنوب غربي</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-add-resident" onclick="addResident()">
+                    <span>+</span> إضافة قاطن آخر
+                </button>
+
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-prev" onclick="prevStep('2b')">السابق</button>
+                    <button type="button" class="btn btn-next" onclick="nextStep('2b')">التالي</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Contact & Residents Information -->
+            <div class="form-step" id="step3">
+                <h2>معلومات الاتصال والقاطن</h2>
+                
+                <div class="form-group">
+                    <label for="fullName">الاسم الثلاثي <span class="required">*</span></label>
+                    <input type="text" id="fullName" name="fullName" placeholder="الاسم الأول، اسم الأب، اسم العائلة" required>
+                    <span class="error-message" id="fullNameError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="motherName">اسم الأم <span class="required">*</span></label>
+                    <input type="text" id="motherName" name="motherName" placeholder="اسم الأم الكامل" required>
+                    <span class="error-message" id="motherNameError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="registry">رقم السجل <span class="required">*</span></label>
+                    <input type="text" id="registry" name="registry" placeholder="رقم السجل" required>
+                    <span class="error-message" id="registryError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">رقم الهاتف <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" placeholder="مثال: 03123456" required>
+                    <span class="error-message" id="phoneError"></span>
+                </div>
+
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-prev" onclick="prevStep(3)">السابق</button>
+                    <button type="button" class="btn btn-next" onclick="nextStep(3)">التالي</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Review & Submit -->
+            <div class="form-step" id="step4">
+                <h2>مراجعة وتأكيد البيانات</h2>
+                
+                <div class="review-section">
+                    <h3>معلومات الموقع</h3>
+                    <div class="review-item">
+                        <span class="review-label">القطاع:</span>
+                        <span class="review-value" id="reviewSector"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">المنطقة العقارية:</span>
+                        <span class="review-value" id="reviewVillage"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">الحي:</span>
+                        <span class="review-value" id="reviewNeighborhood"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">اسم المبنى:</span>
+                        <span class="review-value" id="reviewBuildingName"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">الشارع:</span>
+                        <span class="review-value" id="reviewStreet"></span>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <h3>معلومات المبنى</h3>
+                    <div class="review-item">
+                        <span class="review-label">رقم العقار:</span>
+                        <span class="review-value" id="reviewPropertyNumber"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">رقم القسم:</span>
+                        <span class="review-value" id="reviewSectionNumber"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">القسم ضمن مبنى:</span>
+                        <span class="review-value" id="reviewIsInBuilding"></span>
+                    </div>
+                    <div class="review-item" id="reviewBlockItem" style="display: none;">
+                        <span class="review-label">البلوك:</span>
+                        <span class="review-value" id="reviewBlock"></span>
+                    </div>
+                    <div class="review-item" id="reviewBuildingCountItem" style="display: none;">
+                        <span class="review-label">عدد المباني/البلوكات:</span>
+                        <span class="review-value" id="reviewBuildingCount"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">نوع المبنى:</span>
+                        <span class="review-value" id="reviewBuildingType"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">عدد الطوابق:</span>
+                        <span class="review-value" id="reviewTotalFloors"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">رقم الطابق:</span>
+                        <span class="review-value" id="reviewFloorNumber"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">نوع القسم:</span>
+                        <span class="review-value" id="reviewSectionType"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">الجهة:</span>
+                        <span class="review-value" id="reviewDirection"></span>
+                    </div>
+                </div>
+
+                <div class="review-section" id="myFloorsReview" style="display: none;">
+                    <h3>الطوابق الإضافية المسجلة باسمي</h3>
+                    <div id="reviewMyFloorsList"></div>
+                </div>
+
+                <div class="review-section" id="singleResidentReview">
+                    <h3>معلومات القاطن</h3>
+                    <div class="review-item">
+                        <span class="review-label">الاسم الثلاثي:</span>
+                        <span class="review-value" id="reviewFullName"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">اسم الأم:</span>
+                        <span class="review-value" id="reviewMotherName"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">رقم السجل:</span>
+                        <span class="review-value" id="reviewRegistry"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">رقم الهاتف:</span>
+                        <span class="review-value" id="reviewPhone"></span>
+                    </div>
+                </div>
+
+                <div class="review-section" id="fullBuildingReview" style="display: none;">
+                    <h3>قائمة القاطنين في المبنى</h3>
+                    <div id="reviewResidentsList"></div>
+                </div>
+
+                <div class="submission-info">
+                    <p id="submissionCount"></p>
+                </div>
+
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-prev" onclick="prevStep(4)">السابق</button>
+                    <button type="submit" class="btn btn-submit" id="submitBtn">إرسال البيانات</button>
+                </div>
+            </div>
+
+        </form>
+
+        <!-- Success Message -->
+        <div class="success-message" id="successMessage">
+            <div class="success-icon">✓</div>
+            <h2>تم الإرسال بنجاح!</h2>
+            <p>شكراً لك على تسجيل البيانات. سيتم مراجعة المعلومات قريباً.</p>
+            <button class="btn" onclick="resetForm()">تسجيل منزل آخر</button>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="export-section">
+        <h2>تصدير البيانات</h2>
+        <p>اضغط على الزر أدناه لتصدير جميع البيانات المدخلة إلى ملف Excel</p>
+        <button type="button" class="export-btn" onclick="exportToExcel()">
+            <span>📊</span>
+            تصدير إلى Excel
+        </button>
+        <p class="export-info" id="exportInfo"></p>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
